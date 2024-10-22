@@ -1,5 +1,6 @@
 import requests
-
+from bs4 import BeautifulSoup
+import json
 # URL you want to access
 url = 'https://calendly.com/api/validators/slug'  # Replace with the actual URL
 
@@ -8,14 +9,15 @@ cookies = {
     "__cfruid": "6b9191f936f56e499556233a7fc129a88a72856b-1729596977",
     "__stripe_mid": "4111d9a8-3aef-4665-94b0-5bd8b191c4da0f5ec1",
     "_an_uid": "-1",
-    "_calendly_session": "CT5/b4hmMS9AKX4/a2YyvqBG3kNYzj4QCmwkItct33/9u9l5o2YyliH7RAaPLnoUuXJpYRMLsQqyDJFWxu9Fgse84clpvHQiBlppxX47QwXkBeh9DX5U1qoIpuZqVBJOLF6V0tsr8ZPPIPKKxwEFqZXbVi+/7PxNOJfWeDYeBfmI56VMVwTurdIY+CfvtDkpCYvFwhn2wHFTft+9OMkcyisQkjBQLHgKemfE3nBUZxH5pXzdCtQUIyxBpvd1Dr4T7mbf3yFL4RQddmDtWYtVMJloJXHObc3hPX/SAUru2XfWIQS+CIdw9K7we/ONJYSXgK5faBuzKvdiyzEfC56oyzml/t/sCJIbzToHaL8IKJKsZyfGVIey8Em+/rom4x9Z9rlMgAjVKhuc7wI2qT3yFz0+z4uW4gm3zKaSq54ue+OBs19Rx61OM+i9YDVULCeX7QBcOvbNZyF0K0MZnOolAdrGjEolJ0j7IzuL5Sx6HBsuSQ7UAqyNqpNgu98O3r3xvvtqMxSRDZoxDfNqd66b7/MnuqfSsPRCBN3VP1ltp6ocywS8WXG4JvlbYdHTcuQEM+osVfKtPtW6GsPfFKwBs4RA1O76FEFUQUrqJ/BSknhinRR4nqEWECwmID+W1WtGC8UZH5ZP4dW9naRT1eHE2gXwFBy0dOG0FJyAcDo30j2csPqpN4eCl/h75creilc+LRI3W/1s2WYebndKDaSG7YfDz9SePsLWyv6gRVQvVyNl6/JSCABw0UgjAmzmcLINaPNJxdsLmiSPebxJsGzj8x0EnhC5utDIW0PpLai2nDr+GYay8r7pkdjeF9qe4zmMYTZ1ZkCzLH1xpdbepIa35pkzTlTpW/EfBwPpXr6evSBDr1rhRLPfPZLDbCdChOr6LfMRv6nW7mARoC7O5HmCM5PgGhAfvXfTfAD29cbKaXDb8H6NvC+f0VPOm0Hv0kvVG2J7pTbDSo7T6nxNzBu8jT2XKxnCFW5yx0E0UtCNAz8gWB0PMUP9PgtoPyZgXlCu+Q3JcI4aSqPQyqnlKenvqZVoJq/V94qIluzVexeeutsbOS2s5GBZpL8Cv0XO7f/rnraeLTWGBg==--xoLqrcdNX65BFo2l--CzagR0Tkp/Dr7wMy1pyzpw==",
+    "_calendly_session": "MT/HuB5igSaa01VO4K5tjubuDKuDbagkDpG1C7dUsDW8sT201KalomDOWca099mTksxINTmscpD7Jh/yg4DM6O6HFtD3TNr7q33o+H9RIudHc8OWwn375eF93QhjGZp16OXIuFqunlqpSQj4DSyCJwSoF+2Ot4jBY75Vcx05Rs/Uhofl2H8lj6EIsiU+YIIgNkRAnN57BZFxoj4Kw5bFbiogEVrSGyUyb3Kzn+3Mn/YVZH6cuJNU9MNhHbSvNgqp9BW4QwsdBbuBgp4Yai6f8cUtI5rUZqCdAyYDO8/qshjySyaVhwNJRPwNQJlKrGfVnVT1fUckY/4QBeQryGrrDdo3J/yz8VLTFNn4bIjssdmJqHse7toigO3bB65zPCnp15cg8OvfHvGUaLOX4LWFTlofjdnH8B6GpcXj9siT0rrc2s4MEyJTwowHIx0YxHi+Nkayfl5dORWv9aIzccuXXBvHIZ+Km1gn3F+cFdr6nrUs4790MRl1Edt3K2ydw0Fb/3EWgj3VaprItR/Q15Yj1Rbjj4VnJs44pqci6ZeIA2wyB9zSzfahS0Fpz01/xhi1N5P399hq+F+C169jMlUi1rmMGEjbyau0U0/2VzsO+1ZGVDaLgdybvLEJkwV0jiSjBXWTW0jk2PDCsrIfOwIdHTmKwyE6pb1+fIXSszDJqAXTl5Ufj5n7x7KUfzxd8Sg5v4ODl3W3iR3/SyuzGXrh4d63cCHQN/iv7GZRoAUgnCMtneYg8rkN46pPbduDorwrQidZzm6B2hv3oBTq5fS9Lmc9wS4IEsJ0NW2T+CuXZRC9DksqLu7zw2LLoP/S4HhHJKI49wDi4bhuSjPSRHqu5UZY5GvlklqJe0s06+m8TgbFTcFU+MCZkcjpVBxle641SKu5Affg+cIpXa/g7rDx2MWhd+IaRUHjeojE/+4sOT5+BmY41EGSKO2/W4hl3mrzTw2vKKccNFrIti8+EWwBISUmSqGYgNTHNWy0sMw+UEN51ZnRlAsJO5W7NFqHhnynedUAfU+kXDk2t/I=--g9I0mk5QbBnDKrzZ--pYYLpuBGfyqNGv14mZFw9w==",
     "_cfuvid": "XTrxKlKkyGQP2DBGW5TENR2DQ_jAz_On3renvD3Qy.Q-1729596977243-0.0.1.1-604800000",
-    "_dd_s": "logs=1&id=9b4f512e-f3b1-4900-b123-88efb5bd60c5&created=1729604089648&expire=1729607645969",
+    "_dd_s": "logs=1&id=9b4f512e-f3b1-4900-b123-88efb5bd60c5&created=1729604089648&expire=1729610728952",
     "_ga": "GA1.2.978479820.1729590959",
     "_ga_5SW884XN6D": "GS1.1.1729590958.1.0.1729590958.0.0.0",
     "_ga_DXML0NF3C7": "GS1.1.1729601435.4.1.1729601447.0.0.0",
-    "_ga_HY10QQ22W2": "GS1.1.1729604501.2.1.1729604606.60.0.0",
-    "_ga_V0J9YEEKGG": "GS1.2.1729604181.3.0.1729604181.0.0.0",
+    "_ga_HY10QQ22W2": "GS1.1.1729609642.3.1.1729609812.54.0.0",
+    "_ga_V0J9YEEKGG": "GS1.2.1729609490.4.0.1729609490.0.0.0",
+    "_gat_UA-42305411-1": "1",
     "_gcl_au": "1.1.1688742481.1729597149",
     "_gd_session": "b08cb974-c331-4c63-8fb8-e58899d3cf42",
     "_gd_visitor": "3fd83c95-c5f2-4441-88eb-9d05db0e9e86",
@@ -29,44 +31,52 @@ cookies = {
     "ajs_anonymous_id": "b8538b6e-f882-45f3-9424-40f38b3bd14e",
     "ajs_group_id": "39019248",
     "ajs_user_id": "39042174",
-    "analytics_session_id": "1729604518787",
-    "analytics_session_id.last_access": "1729604615224",
+    "analytics_session_id": "1729609625299",
+    "analytics_session_id.last_access": "1729609823982",
     "cb_anonymous_id": "\"b2203a0b-be21-49fc-9e18-4f5577bd51cb\"",
     "cb_group_id": "null",
     "cb_user_id": "null",
-    "cf_clearance": "6rTXdZAvmoUrZ7s5XabJOoWBH1t.gXYI1r.EsMmbKgM-1729604178-1.2.1.1-8LmISZjUSK9k_GGyoCIxXQqAwLeSvpcoyRAD5mlep5UNDxiXueZofKVlweDp3zhlLGw90Zgg_Un969pvYBo3Fn.Z_pAcXaYwE6AuDvfl.BOwlOE9fJg6AigrxSlaRigvpQAlFWnsIMwwxeEfZ1pZc_IIl_XBor7ngiQmJCHrGVIU02NQFb9aUeQgXk_UP4MOp6MwZN0RYjHBtMTHfpjLSEynS_K1pGocbm9PM2FnwzJTF3OJazTy9gKDUbsTa1vtxe1GiHSw.eZDdQMePb8eTfx1uYm8iOWWZWS70D9wPj4C1WBHyquhdzrK1xI5FmOXuFVnTQXYdOWVbvpfl2Z63w",
-    "country": "IN",
-    "cro-variation-ids": "30158330662,6510013379248128",
-    "fs_lua": "1.1729606642012",
-    "fs_uid": "#rPp#3fa31cb7-cec0-45bb-bbbb-7fd24a4b57cc:a4108700-1c29-41bd-9cb6-d733cb867896:1246:0.11008434667012507",
-    "fs_ua": "1",
-    "frontend_cid": "625c5865c26f8c79f135c91bb9f9ebdd",
-    "frontend_session_id": "06b80ca1-673f-4fbc-b582-2c01abec3b0a",
-    "frontend_user_id": "17116043",
-    "gtm_ua": "UA-6063589-15",
-    "hsct": "eyJ0eXAiOiJKV1QiLCJhbGciOiJSUzI1NiIsImtpZCI6Ijk5OTQyMzB6ajl1NVZ4WVBPRmFTdFl3UHdZTTV2S3pJbklxcktHUVBUaHRPS0lKMDU4NmQ4a0VhbFZpNTZBODgxWUNxM2xsbDdVUU5NTm5vdjJ5V3hHRmNaYldNbnc4a3VaYXg4ZFdKZmJlYXowRVZtYlRhdTBaRzFJUlZGeXU5TVpaZzE1WmF5RHpYWE5wTDFTR0JObXV0ZyIsInRpbWUiOiIxNzI5NjA5NTA0MjQ4IiwiaWF0IjoxNzI5NjA5NTg1fQ.N8s3PlLeH-9WH20Zk3zvGHu6b5xQayF9gj56lvNNH-nNS8ThgWczNw4seGnftFydzyG6buSMtW8j9Lo0IJmN5VhI1gY0ux3Iz6pd66PbB6JH4XZf_1tS15jFUFwjDTA1v58oA-z0llH5wqafJLNqGEAL8HHhhL3bu60F71W6OFafgde5udDWCpU1z2Q3U6QUpDiCrEdJKx0H6GD_pytc90MOdZYoFOQGytcAwwJ9hKDYj7Wg31zR_5PrHzT0GscpmZNT8HZ3z5CRe0BppcU-8q7ZJlLhTw2E0I9bRqlhu-F9Pe61a1MyPtSEfOAnUIOB2F5UbQ2lZFLKnHKqj4GZpDQQ_biBWrPOhGL4I8w6LTZ2-xnml0DTCgpBf9NgAbGbPbwDZshloMsxK5_3cPfxwZ_uSwG6cRhg3_pPbPpPRw2NMOee8TtWb8_VzGZ6AlOZss9obPf6WR8VczX1InYcZXG60uM2lOMkvPCt-K2QntmI7H2CzYg2r28ydbf1G53GOQXS82MTv7r51KOBxD3T3Tb7G3X3PRvK-hrDK5YoRVw3kSTtkP7Tu1oOcDN8SKlXbhtTT9m5m_VXiRM6HDWOLW1X4CwH0heBSbUm98ZBLThcTwtfwiT5CB-PLMIYhHz13uhFZfs6K-WY2X0_0G4k77bbfJ_oPMLL1DSr6VeF6ndHewpFW4zls8hD3zHl5k9bcHHoiW8_4S2Q3w6gdxab6xCgtFO3vwxw4FsGmNkBtf0WZ6x04zSoJvWtoOxD9voBUB9P7DHoC1qU7EGyH1MXSz3MNwgsPxBXQUGFG4w0--L1H-0mITNTH-pN4yfKCNJcYqG96lRSzyT0gq1DNwAqyyijqLZg",
-    "is_ac": "1",
-    "is_connected": "true",
-    "is_subscribed": "1",
-    "kol_tmt": "0",
-    "last_visit": "1729604761588",
-    "session_id": "aa59472f-b4ea-476b-a80a-c55a8d3e0a7a",
-    "session_token": "f8fcb4d8-9d60-4383-b4cd-d6cf89e12104",
-    "tktc": "1",
-    "upscope__email": "manaslaud2004@gmail.com",
-    "upscope__name": "Manas Laud",
-    "upscope__time": "1698451364420",
-    "user_id": "17116043",
-    "visit_id": "1729596391444"
+    "cf_clearance": "NobyMcVSiySOdvixBhnhR7gPrPoywySbIGPFBcV0gwU-1729609488-1.2.1.1-RM7pumZcOEOgcmWSvGqXY2.iPrqwFwEqWB5yh_fWFnzalWiZf3Zy0XxBpy.9xgOOBBfvQYuntzYgMnWjBTswt80F.pD1bMPCuLZMp1TOSk1M3Z6l8fGSU9kCe1MwhhxzwYA4.azlQXZrEqQ50jNVa3DKG_FQxRX79_mZjkv1gW88_PrNlS5ecc71HU6TyByk0EjjEJWHPULQCix.d6Al0Hixd_WATaWQCHtj7X4Wky64NjO7obVVRVgtEaNEnA3uUTfuw7IjoO_rurEafQvcDT63px_9159Q3jhb8FUHItjS286qOlSwlODvWqYxeK.n0Pd2sbhNW03gd5HW3Ne5r43afykmtlM3v5k.ljwJZPzT.R9wnyOR5JgB4SMsezAnBZ_t9yU7TX31oNIMU6Tt8e2OcYtD35oOUF0-1nscHCSKm5G1BdMtfGHjYUv8bUBWjNyYm0MfmEV0NK21PhWIS-7k8mnIk_fX7n5PSM3G_oSMp3__oMOzr6tL8Y7J-8dSeMN0o2dhTovMcbfIF8OlFP-4WYYE2gM8R7MeXHqADZwPi7De2VkBSgG0dhrRr1b2CrK_98iZSLkZCHQR3cIYuyR3JcUVcC9wTpeGr1oa0Z4TPgi-18lEvBqWUsH4uv7VeDqcmCOekacP8rHyA3DB9CKu6C-1Neqoa8wVSBZFBHPMHR5cO3BVDfKfSlM.IcHTlU5KSR8LVwFSmQG5ynhrf7UsQCK73hl_s.sC05C6wHMAhGJBRsYmC4.6tQKDxr6W3Lwco6b3CInXg..3qUnVgMtiOBYZjMQcqW3EB4hMdsBI2OY7pdRNRy7h_3pn5EXsFQG8qY.KsT3AZ19v10nG1wnb6U9gE2aG35ZtbSRDgPtTp0BPxHMJkp_EFBFL5pHwlFvLz8f2u0Q7McziYOV7nG_D_ovunJsP0_Xy9jnt8-0IGGp36Mr3f8.z0OeiENh4lV_xl9GHtOENZFxNTz2iBY3y_gE-3EFts0GN4ch18rYw7jYctjZmfkOEw5YlYXOMocA.hI7AhWg2Vt8e4Hpm7VfuP-CbAxRoqTYg0cMzVBqbeB9SO5HhcfwEYdMzxInJER82GM88BOmgnFjPLOoYqstg28DOpK1cdD9ZdLtMO_dRG9obY1y64j2COlo8uh9KXo1Hek6GNcDBCMnt_2C8tDNYN1NE8dpYUsnZK7AuVxhiWkH5aXPKi6XvbdRM_D8cXq2QCDXL96FnbcG2-6YbU0I5Da4vxU0BZVxBzJuNENva3oz6Uw9LFwVrt1V1B1_Lg3QWnhNdT3w_DH6Ey9kFY8W8E3_q8f34IzHn-6W_1AfJ4HzprM0nDTzEx0Lt2R39j8.vgoUKH7h_S90Qz9vlwAvmopEJff9LDNZMS43QRUtnf03e4_gwiHiVb1l8C20MNhAFw6h5BmfTcyuOlj1Ic8epA0D1RthRBGZ8GbY8pA_NhMCFIk6NYGgsdvnP3KgrBeH4dUuPGgj3zJlO9WWOewqneGiZT24_ZvHnJ8UUG3fG7IQ3f9m93ujd2Hg3zEEl9f31y-0OtjYbftgRNs9zM4l2RaHDmbuvVhF_D3nUmp0BPG6ZrfvH8CyG1iN63D56fUuufmR7xMPcRmZNNJljytMn4zDQNa3tRSKowNq2DIsW38PcfXUtyy0JpmV4VAlxTfXU8ShHSHG1tYYLe6wzHUszEG1QZgb0IPqCzgq33fKKkLwDq4bJHf9ByF9KcSN5I4ZZ2Lp1CqGWkY6OjYO6pHeNwznQ6c5J1evJkUUXk9BhPcXLFFpLj5Q8kDrGFLiIX2a5CtzvEPmpkwzBMSMWMIeZnFQuUp7GxiSVqQxfqIoZmYy0nG1HmkUGDGLZhg64p2F4A7rSmytNFctN6-5E60nWgVs_nVNU5LtYjHhDEtmY7HS82x7EYhtE6HjqbwV4K7IuKKhDwj52OAIU3PbPAReRZYfaLfAK8TTnEUC6_bCudHP2oV8lRfNWu2I9H6CeIOfv8jsAe7ZcDh8PI9p_16sSQNGuRU_O58yevaQZsRiOi0G7iWGEHSLxKu4cZcL_WXSNEfkp27CxtlEabmbCDoLL9Qp7BB9WhKiYGGVspK8HWgX34_lj5z_09gdFVmQLa80DYOX0FNvTVRA55GgLx2u0D4a21ftRxnK0D5F5Q_AvOfr16bxgWAPXE0OHGuItmlg1S5gRz95zE4UlLo3RxX6auuT4Sw8ybEHP2y4W69Rve8dtLsyG5gnDBH50rP2gv6zbdpB_W1pFeQVmj5hS5m6Q9H1byWT0XNSDMym5CIzLL0CckX9HDC6CX4DSzKFmQU76UQ6T3VvRM9jbVAsUQya1WMIiNgj2mJx2voOe_VzpTMsTGBb_h6HtsBQmszYwRj5z5N0RF1QUzQgoWw34jzCwoHo6F5UimDMz4f93Q2PVYNxkslPwiWQLgmWqU2XGpUExK_9W0NQ1HhqsZJIXUExR4sbV75Ke8T8N2zPnvZ1FS7wShbM1HrOxlU6wAXqC67wBiB8M4dpLtDGAAB-_5I=--UorL8EjYywS8tWbe--nYlU1D7TZp7Rj8ufwME7hw=="
 }
+
+
 
 # Define the headers
-trick_header = {
-    'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10.9; rv:32.0) Gecko/20100101 Firefox/32.0'
+headers = {
+    'Accept': 'application/json, text/plain, */*',
+    'Accept-Encoding': 'gzip, deflate, br, zstd',
+    'Accept-Language': 'en-US,en;q=0.5',
+    'Connection': 'keep-alive',
+    'Content-Length': '53',
+    'Content-Type': 'application/json',
+    'Host': 'calendly.com',
+    'Origin': 'https://calendly.com',
+    'Referer': 'https://calendly.com/app/personal/link',
+    'Sec-Fetch-Dest': 'empty',
+    'Sec-Fetch-Mode': 'cors',
+    'Sec-Fetch-Site': 'same-origin',
+    'TE': 'trailers',
+    'User-Agent': 'Mozilla/5.0 (X11; Ubuntu; Linux x86_64; rv:130.0) Gecko/20100101 Firefox/130.0',
+    'X-CSRF-Token': '-R6lZZPVJYyPreAXqKccH29HPEv8_aZjzg464Gah_iarr6YZEZ3Tth-9_1HKkxD-1OIwLy1OP_oDHzjSYayBLg',
+    'X-Page-Rendered-At': 'null',
+    'X-Requested-With': 'XMLHttpRequest'
 }
 
-# Send a GET request with the cookies and headers
-response = requests.get(url, cookies=cookies, headers=trick_header)
 
+# Send a GET request with the cookies and headers
+payload=json.dumps({"slug":"ma","owner_id":39042174,"owner_type":"User"})
+
+response = requests.post(url, cookies=cookies, headers=headers,data=payload)
 # Print the response text (or handle it as needed)
-print(response.text)
+# print(response.text)
+soup = BeautifulSoup(response.text, 'lxml')
+
+# Print the prettified HTML or extract specific content
+print(soup.prettify())  # This prints the entire HTML in a readable format
+
+# Optionally, extract specific elements
+# For example, to find all <h1> tags:
+h1_tags = soup.find_all('h1')
+for tag in h1_tags:
+    print(tag.get_text())
+
