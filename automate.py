@@ -8,7 +8,7 @@ import time
 chrome_options = webdriver.ChromeOptions()
 chrome_options.debugger_address = "localhost:9222"
 available=[]
-seedKey="manas"
+seedKey="harsh"
 def generateKeys():
     usernames = []
 
@@ -27,7 +27,8 @@ def generateKeys():
         usernames.append(f"{seedKey}{suffix}") 
     
     for prefix in prefixes:
-        usernames.append(f"{prefix}{seedKey}") 
+        usernames.append(f"{prefix}{seedKey}")
+         
     from random import choice
     variations = [f"{seedKey}{choice(['123', 'xyz', 'abc'])}",
                   f"{choice(['super', 'mega'])}_{seedKey}"]
@@ -78,6 +79,7 @@ input_field = wait.until(EC.presence_of_element_located((By.NAME, "slug")))
 
 wait.until(EC.element_to_be_clickable((By.NAME, "slug")))
 #cycle---> clear, send ,(wait 2secs and )check FOR ALL GENERATED KEYSSSS
+
 unames=generateKeys()
 for uname in unames:
     clearInput()
