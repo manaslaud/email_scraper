@@ -2,6 +2,24 @@
 
 This project is a basic web scraper built using Python and Selenium. It automates browser interactions and extracts avaiable usernames/ calendly profile URL's from a given seed phrase(intiail name).
 
+## Approach
+- Task: Scrape all possible avaiable usernames/ user links from Calendly.
+- Issue: There is no publically avaiable API's that get all users.
+- There are developer api's that return user details when given user uuid
+- If user uuid is sequentially generated then possible to spam this api for every integer to get user details (but uid is not integer but a uuid string)
+- Observing dashboard we have an option to choose our own username (used as a slug for generating dynamic URL'S for meet bookings)
+- There is an internal api, for checking validity of a slug
+  ```bash
+  https://calendly.com/api/validators/slug 
+  ```
+- Upon some trial and error, can see that there is no rate limiter or at the very least rate limiter time frame is higher
+- Automate the process of inputing usernames via Selenium, API spamming not possible as CORS enabled and requests only accepted via https://calendly.com
+- If a username shows unavailable (error code 422) then it means it already exists and we have found a valid username / url
+- Store it in an array
+- Generate all possible usernames/slugs and check for unavailablity
+- Map all the slugs to a valid URL
+- 
+
 ## Features
 - Automated browser interaction using Selenium.
 - Handles dynamic content loading.
