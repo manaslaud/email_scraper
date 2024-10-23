@@ -235,7 +235,6 @@ def generateKeys():
     usernames = []
     usernames.append(seedKey)  
     usernames.append(seedKey.lower())  
-    usernames.append(seedKey.upper())  
 
     for i in range(1, 9):  
         usernames.append(f"{seedKey}{i}") 
