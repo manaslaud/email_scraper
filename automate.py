@@ -5,10 +5,10 @@ from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
 from selenium.webdriver.common.keys import Keys
 import time
-import random
+# import random if needed can use random.choice()
 
 proxies = [
-    "41.173.24.38:80",
+"41.173.24.38:80",
     "43.134.32.184:3128",
     "43.133.59.220:3128",
     "46.47.197.210:3128",
@@ -221,15 +221,18 @@ proxies = [
     "172.104.91.248:8080",
     "172.104.61.64:8080",
     "149.129.224.127:3128",
-    "8.219.97.248:80"
-]
+    "8.219.97.248:80"]
 
-
-chrome_options = webdriver.ChromeOptions()
-chrome_options.debugger_address = "localhost:9222"
-
+seedKey = "manas"
 available = []
-seedKey = "yash"
+proxy_index = 0 
+
+def get_next_proxy():
+    global proxy_index
+    proxy = proxies[proxy_index]
+    proxy_index = (proxy_index + 1) % len(proxies)  
+    return proxy
+
 
 def generateKeys():
     usernames = []
@@ -257,18 +260,17 @@ def generateKeys():
     
     return list(set(usernames))  
 
-def clearInput():
+def clearInput(input_field):
     input_field.clear()  
     input_field.send_keys(Keys.CONTROL + "a") 
     input_field.send_keys(Keys.BACKSPACE) 
 
-def sendInput(input):
+def sendInput(input_field, input):
     input_field.send_keys(input)
     time.sleep(2)
 
 def waitAndCheck(driver, input1):
     try:
-        # Wait for up to 5 seconds for the element to be present
         parent_element = WebDriverWait(driver, 5).until(
             EC.presence_of_element_located((By.CSS_SELECTOR, '[data-component="slug-status"]'))
         )
@@ -281,32 +283,36 @@ def waitAndCheck(driver, input1):
 
         return content
     except Exception as e:
-        print("Element not found within the given time. ",str(e))
+        print("Invalid Element ",str(e))
         return None
 
 unames = generateKeys()
 
-for uname in unames:
-    # selecting a random proxy for the current username
-    selected_proxy = random.choice(proxies)
-    print('Using proxy: ',selected_proxy)
-    chrome_options.add_argument('--proxy-server=' + selected_proxy)
-
-    service = Service("/usr/bin/chromedriver")  
-    driver = webdriver.Chrome(service=service, options=chrome_options)
+for idx, uname in enumerate(unames):
+    # selecting a random proxy every 5th attempt
+    if idx % 5 == 0:
+        selected_proxy = get_next_proxy()
+        print(f'Switching to proxy: {selected_proxy}')
+        
+        chrome_options = webdriver.ChromeOptions()
+        chrome_options.debugger_address = "localhost:9222"
+        chrome_options.add_argument('--proxy-server=' + selected_proxy)
+        service = Service("/usr/bin/chromedriver") 
+        driver = webdriver.Chrome(service=service, options=chrome_options)
 
     driver.get("https://calendly.com/app/personal/link")
 
     wait = WebDriverWait(driver, 20)  
     input_field = wait.until(EC.presence_of_element_located((By.NAME, "slug")))
-
     wait.until(EC.element_to_be_clickable((By.NAME, "slug")))
 
-    clearInput()
-    sendInput(uname)
+    clearInput(input_field)
+    sendInput(input_field, uname)
     print(waitAndCheck(driver, uname))
 
-    driver.quit()
+    # updating proxy after every 5th iteration
+    if (idx + 1) % 5 == 0:
+        driver.quit()
 
 def mapTo(el):
     return "https://calendly.com/" + el
