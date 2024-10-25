@@ -5,7 +5,7 @@ from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
 from selenium.webdriver.common.keys import Keys
 import time
-# import random if needed can use random.choice()
+# import random         ///if needed can use random.choice()
 
 proxies = [
 "41.173.24.38:80",
