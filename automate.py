@@ -243,8 +243,8 @@ def generateKeys():
         usernames.append(f"{seedKey}{i}") 
         usernames.append(f"{i}{seedKey}")  
     
-    suffixes = ['_official', '_123', '_thegreat', '_xyz', '1234', '2024']
-    prefixes = ['user_', 'member_', 'cool_', 'the_']
+    suffixes = ['_123', '_xyz', '1234', '2024']
+    prefixes = ['user_', 'member_']
     
     for suffix in suffixes:
         usernames.append(f"{seedKey}{suffix}") 
@@ -253,7 +253,7 @@ def generateKeys():
         usernames.append(f"{prefix}{seedKey}")
          
     from random import choice
-    variations = [f"{seedKey}{choice(['123', 'xyz', 'abc'])}",
+    variations = [f"{seedKey}{choice(['123', 'abc'])}",
                   f"{choice(['super', 'mega'])}_{seedKey}"]
     
     usernames.extend(variations)  
@@ -267,7 +267,7 @@ def clearInput(input_field):
 
 def sendInput(input_field, input):
     input_field.send_keys(input)
-    time.sleep(2)
+    time.sleep(5)
 
 def waitAndCheck(driver, input1):
     try:
@@ -299,8 +299,7 @@ for idx, uname in enumerate(unames):
         chrome_options.add_argument('--proxy-server=' + selected_proxy)
         service = Service("/usr/bin/chromedriver") 
         driver = webdriver.Chrome(service=service, options=chrome_options)
-
-    driver.get("https://calendly.com/app/personal/link")
+        driver.get("https://calendly.com/app/personal/link")
 
     wait = WebDriverWait(driver, 20)  
     input_field = wait.until(EC.presence_of_element_located((By.NAME, "slug")))
