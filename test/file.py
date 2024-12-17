@@ -11,8 +11,13 @@ from selenium.webdriver.common.action_chains import ActionChains
 from seleniumwire import webdriver
 
 USERNAME, PASSWORD = 'devdavda_ZW1ay', 'Devonehash+1'
+SELECTED_DAY=None
+SELECTED_TIME=None
 
-def handle_next_page(driver):
+def handle_next_page(driver,url='',date='',t=''):
+    print('inside handle next page:' + date + t + url)
+    username=url.split('/')[1]
+    time.sleep(2.5)
     try:
         full_name_input = WebDriverWait(driver, 10).until(
             EC.presence_of_element_located((By.NAME, 'full_name'))
@@ -32,7 +37,8 @@ def handle_next_page(driver):
     except Exception as e:
         print(f"An error occurred on the new page: {e}")
 
-def handle_time_selection(driver):
+def handle_time_selection(driver,url='',date=''):
+    
     try:
         time.sleep(1)
         time_selection_div = WebDriverWait(driver, 10).until(
@@ -52,11 +58,12 @@ def handle_time_selection(driver):
                     if next_button:
                         next_button_text = next_button.text
                         print(f"Clicking on the button with text: {next_button_text}")
-                        
+                        val=button.get_attribute('data-start-time')
+                        time.sleep(1)
                         next_button.click()
                         print("Clicked the Next button, moving to handle the next page.")
                         
-                        handle_next_page(driver)
+                        handle_next_page(driver,url,date,val)
                         return
                     else:
                         print("Next button not found or not clickable.")
@@ -111,9 +118,9 @@ def get_all_a_tags_selenium(url, slug):
                         #     return
                         status=button.get_attribute('aria-label').split('-')[1].strip()
                         if status=='Times available':
-                            print(status)
+                            print(button.get_attribute('aria-label').split('-')[0].strip())
                             button.click()
-                            handle_time_selection(driver)
+                            handle_time_selection(driver,url,button.get_attribute('aria-label').split('-')[0].strip())
                             return
     except Exception as e:
         print(f"An error occurred: {e}")
@@ -128,13 +135,11 @@ def process_slug(slug):
 
 def read_excel(file_path, sheet_name=0):
     try:
-        # Read the Excel file without assuming column headers
         df = pd.read_excel(file_path, sheet_name=sheet_name, usecols=[0], header=None)  
         
-        # Iterate over the first column (column index 0)
         for slug in df.iloc[:, 0]:  
-            print(slug)  # Print each slug or call your function
-            process_slug(slug)  # Process each slug
+            print(slug)  
+            process_slug(slug)  
     except FileNotFoundError:
         print(f"File not found: {file_path}")
         return None
