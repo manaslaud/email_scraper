@@ -22,6 +22,7 @@ def connect_to_db():
         print(f"Database connection failed: {e}")
         sys.exit(1)
 
+#db stores time in IST, convert to ET (HANDLE DATE AND TIME)
 def fetch_user_schedule(user_id):
     """Fetch the schedule for the given user ID."""
     connection = connect_to_db()

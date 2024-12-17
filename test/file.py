@@ -9,14 +9,38 @@ from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
 from selenium.webdriver.common.action_chains import ActionChains
 from seleniumwire import webdriver
+import psycopg2
 
 USERNAME, PASSWORD = 'devdavda_ZW1ay', 'Devonehash+1'
 SELECTED_DAY=None
 SELECTED_TIME=None
 
+def updateDB(username='',date='',time=''):
+    conn = psycopg2.connect(
+    dbname="test_db", 
+    user="postgres", 
+    password="postgres", 
+    host="localhost", 
+    port="5432"
+)
+    cur=conn.cursor()
+    insert_query = """
+    INSERT INTO user_logs (username, date, time) 
+    VALUES (%s, %s, %s)
+    """
+    data=(username,date,time)
+    try:
+        cur.execute(insert_query, data)
+        conn.commit()
+        print("Data inserted successfully.")
+    except Exception as e:
+        conn.rollback()
+        print(f"An error occurred: {e}")
+
 def handle_next_page(driver,url='',date='',t=''):
     print('inside handle next page:' + date + t + url)
-    username=url.split('/')[1]
+    username=url.split('.com/')[1]
+    print(username)
     time.sleep(2.5)
     try:
         full_name_input = WebDriverWait(driver, 10).until(
@@ -25,7 +49,7 @@ def handle_next_page(driver,url='',date='',t=''):
         email_input = driver.find_element(By.NAME, 'email')
 
         full_name_input.send_keys('Dev')
-        email_input.send_keys('davda@onehash.ai')
+        email_input.send_keys('davd3a@onehash.ai')
 
         actions = ActionChains(driver)
         submit_button = driver.find_element(By.XPATH, '//button[@type="submit"]')
@@ -34,6 +58,8 @@ def handle_next_page(driver,url='',date='',t=''):
         time.sleep(1)
         WebDriverWait(driver, 10).until(EC.url_changes(driver.current_url))
         print(f"Form submission successful! New URL: {driver.current_url}")
+        updateDB(username,date,t)
+        
     except Exception as e:
         print(f"An error occurred on the new page: {e}")
 
@@ -59,7 +85,7 @@ def handle_time_selection(driver,url='',date=''):
                         next_button_text = next_button.text
                         print(f"Clicking on the button with text: {next_button_text}")
                         val=button.get_attribute('data-start-time')
-                        time.sleep(1)
+                        time.sleep(2)
                         next_button.click()
                         print("Clicked the Next button, moving to handle the next page.")
                         
