@@ -8,6 +8,7 @@ from selenium.webdriver.common.by import By
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
 from selenium.webdriver.common.action_chains import ActionChains
+from chromedriver_py import binary_path # this will get you the path variable
 from seleniumwire import webdriver
 import psycopg2
 

@@ -2,18 +2,16 @@ from selenium import webdriver
 from selenium.webdriver.chrome.service import Service
 from selenium.webdriver.chrome.options import Options
 
-# Set Chrome options for headless mode (optional for debugging)
-chrome_options = Options()
-chrome_options.add_argument('--no-sandbox')  # Disable sandboxing if required
-chrome_options.add_argument('--disable-dev-shm-usage')  # Disable shared memory usage
+def connect_to_chrome():
+    chrome_options = Options()
+    chrome_options.add_experimental_option("debuggerAddress", "127.0.0.1:9222")  # Connect to the remote debugging port
 
-# Set the path to the chromedriver
-service = Service("/usr/bin/chromedriver")  # Change this path as needed
+    driver = webdriver.Chrome(options=chrome_options)
+    
+    driver.get("https://www.example.com")
 
-try:
-    driver = webdriver.Chrome(service=service, options=chrome_options)
-    driver.get("https://www.google.com")  # Open Google to test
-    print(f"Page title: {driver.title}")  # Should print "Google"
-    driver.quit()  # Close the browser
-except Exception as e:
-    print(f"An error occurred while launching the browser: {e}")
+    print(driver.title)
+    driver.quit()
+
+if __name__ == "__main__":
+    connect_to_chrome()
