@@ -167,11 +167,12 @@ def fetch_user_schedule(user_id):
 
 def execute_task(user_id, date, t):
     if user_id=='' or date=='' or t=='':
-        return 
+        return False
     cancelResult=handleMeetCancellation(user_id,date,t)
     dbResult=handleDeletionFromDb(user_id)
     if not cancelResult or not dbResult:
         return False
+    return True
 
 if __name__ == "__main__":
     if len(sys.argv) != 2:
