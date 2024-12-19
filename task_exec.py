@@ -55,30 +55,68 @@ def connect_to_db():
         print(f"Database connection failed: {e}")
         sys.exit(1)
 
-def handleMeetCancellation(user_id,date,t):
+def handleMeetCancellation(user_id,date='',t=''):
+    time2_obj= datetime.strptime(t, "%I:%M%p") # 12-hour format with AM/PM
+    normalized_time2=time2_obj.strftime("%H:%M")  # 24-hour format
     chrome_options = Options()
     chrome_options.add_experimental_option("debuggerAddress", "127.0.0.1:9222")  # Connect to the remote debugging port
     driver = webdriver.Chrome(options=chrome_options)
-    driver.get("https://calendly.com")
-    a_tags = WebDriverWait(driver, 20).until(EC.presence_of_all_elements_located((By.TAG_NAME, 'a')))
-    for tag in a_tags:
-        href = tag.get_attribute('data-calendly-label')
-        if(href=='scheduled-events-link'):
-            tag.click()
-            break
-    time.sleep(5.5)
-    print(convertToET(date+' | '+t))
-    time_slot_spans=[]
-    span_tags = WebDriverWait(driver, 20).until(EC.presence_of_all_elements_located((By.TAG_NAME, 'span')))
-    for span_tag in span_tags:
-        if span_tag.get_attribute('data-component') == 'event-time':
-            time_slot_spans.append(span_tag)
-            print(span_tag.text)
-
-
+    time.sleep(6)
+    driver.get("https://calendly.com/app/scheduled_events/user/me")
+    # print(convertToET(date+' | '+t)) wrong day conversion, remove day from result
+    time.sleep(6)
+    
+    #getting day list item tags
+    divs = WebDriverWait(driver, 20).until(EC.presence_of_all_elements_located((By.TAG_NAME, 'div')))
+    day_list_items_tags=[]
+    map_day_and_items={}
+    for div in divs:
+        if div.get_attribute('data-component')=='day-list-item':
+            day_list_items_tags.append(div)
+            #finding elements inside day list items, header
+            day=div.find_element(By.TAG_NAME,'h2').text.strip()
+            dayWoYear=" ".join(day.split()[:-1]).strip()
+            parts = dayWoYear.split(", ")  
+            day_month = parts[1].split(" ") 
+            formatted_date = f"{parts[0]}, {day_month[1]} {day_month[0]}"
+            # print(formatted_date)
+            #finding event list items of this day, time
+            inside_day_list_items = div.find_elements(By.TAG_NAME,'div')
+            event_list_items=[]
+            for i in inside_day_list_items:
+                if i.get_attribute('data-component')=='event-list-item':
+                    event_list_items.append(i)
+            # print(event_list_items)
+            map_day_and_items[formatted_date.split(", ")[1]]=event_list_items
+    print(map_day_and_items)
+    arrayToCheck=map_day_and_items[date.split(", ")[1]]
+    elToClick=None
+    for el in arrayToCheck:
+        divs=el.find_elements(By.TAG_NAME,'div')
+        for div in divs:
+            if div.get_attribute('data-component')=='locked-time':
+                startTime=div.text.split(" ")[0]
+                time1_obj = datetime.strptime(startTime, "%I:%M%p")  # 12-hour format with AM/PM
+                normalized_time1 = time1_obj.strftime("%H:%M")  # 24-hour format
+                print(normalized_time1,normalized_time2)
+                if normalized_time1 == normalized_time2:
+                    el.click()
+                    buttons=el.find_elements(By.TAG_NAME,'button')
+                    for button in buttons:
+                        if button.get_attribute('aria-label')=='Cancel':
+                            button.click()
+                            handlePopupCancellationButton(driver)
     driver.quit()
 
-#db stores time in IST, convert to ET (HANDLE DATE AND TIME)
+
+def handlePopupCancellationButton(driver):
+    spans=driver.find_elements(By.TAG_NAME,'span')
+    for span in spans:
+        if span.text=='Yes, cancel':
+            span.click()
+    
+    
+#db stores time in IST, 
 def fetch_user_schedule(user_id):
     """Fetch the schedule for the given user ID."""
     connection = connect_to_db()
