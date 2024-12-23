@@ -16,7 +16,7 @@ USERNAME, PASSWORD = 'devdavda_ZW1ay', 'Devonehash+1'
 SELECTED_DAY=None
 SELECTED_TIME=None
 
-def updateDB(username='',date='',time=''):
+def updateDB(username='',date='',time='',slug=''):
     conn = psycopg2.connect(
     dbname="test_db", 
     user="postgres", 
@@ -26,10 +26,10 @@ def updateDB(username='',date='',time=''):
 )
     cur=conn.cursor()
     insert_query = """
-    INSERT INTO user_logs (username, date, time) 
-    VALUES (%s, %s, %s)
+    INSERT INTO user_logs (username, date, time, slug) 
+    VALUES (%s, %s, %s, %s)
     """
-    data=(username,date,time)
+    data=(username,date,time,slug)
     try:
         cur.execute(insert_query, data)
         conn.commit()
@@ -49,8 +49,8 @@ def handle_next_page(driver,url='',date='',t=''):
         )
         email_input = driver.find_element(By.NAME, 'email')
 
-        full_name_input.send_keys('Dev')
-        email_input.send_keys('davd3a@onehash.ai')
+        full_name_input.send_keys('Testing')
+        email_input.send_keys('xyz@gmail.com')
 
         actions = ActionChains(driver)
         submit_button = driver.find_element(By.XPATH, '//button[@type="submit"]')
@@ -59,7 +59,8 @@ def handle_next_page(driver,url='',date='',t=''):
         time.sleep(1)
         WebDriverWait(driver, 10).until(EC.url_changes(driver.current_url))
         print(f"Form submission successful! New URL: {driver.current_url}")
-        updateDB(username,date,t)
+        slug=driver.current_url.split("/")[-1].strip()
+        updateDB(username,date,t,slug)
         
     except Exception as e:
         print(f"An error occurred on the new page: {e}")
@@ -116,6 +117,8 @@ def get_all_a_tags_selenium(url, slug):
     chrome_options = Options()
     chrome_options.add_argument(f'--proxy-server={proxies}')
     chrome_options.add_experimental_option("detach", True)
+    # chrome_options.add_argument("--headless")
+
 
     service = Service('/usr/bin/chromedriver')
     driver = webdriver.Chrome(service=service, seleniumwire_options=sw_options, options=chrome_options)
@@ -124,9 +127,11 @@ def get_all_a_tags_selenium(url, slug):
         driver.get(url)
 
         a_tags = WebDriverWait(driver, 20).until(EC.presence_of_all_elements_located((By.TAG_NAME, 'a')))
-        time.sleep(1.2)
+        while(len(a_tags)<=3):
+            a_tags = WebDriverWait(driver, 20).until(EC.presence_of_all_elements_located((By.TAG_NAME, 'a')))            
         for tag in a_tags:
             href = tag.get_attribute('href')
+            print(href)
             if href and slug in href:
                 driver.get(href)
                 print('printing one of the <a> href links ',href)
@@ -177,3 +182,5 @@ def read_excel(file_path, sheet_name=0):
 if __name__ == "__main__":
     file_path = "Calendly_data.xlsx"
     read_excel(file_path)
+    
+    

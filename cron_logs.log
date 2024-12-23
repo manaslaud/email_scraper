@@ -5,3 +5,8 @@ Executing task for User ID: 11
 Task scheduled for: Wednesday, December 17 10:19pm
 Task executed at: 2024-12-17 22:04:01.756393
 --------------------------------------------------------------------------------------------------------
+Fetched schedule for User ID 23: Date = Friday, December 20, Time = 9:00am
+{'December 20': [<selenium.webdriver.remote.webelement.WebElement (session="49c4e879ea9153e08f497dc80880d3fb", element="f.4E65D860F14D83A4A72BCF9DB3EEF017.d.47968CDBC58C2247CDBE0B850533697B.e.2214")>]}
+09:00 09:00
+User with ID 23 deleted successfully.
+Successful
