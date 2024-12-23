@@ -10,6 +10,7 @@ from selenium.webdriver.support import expected_conditions as EC
 from selenium.webdriver.common.by import By
 from datetime import datetime, timedelta
 import pytz
+from selenium.common.exceptions import TimeoutException
 
 # Database config
 DB_HOST = "localhost"
@@ -78,65 +79,58 @@ def handleDeletionFromDb(user_id):
         if connection:
             connection.close() 
 
-    
-def handleMeetCancellation(user_id,date='',t=''):
+
+def handleMeetCancellation(user_id, date='', t='', slug=''):
     try:
-        time2_obj= datetime.strptime(t, "%I:%M%p") # 12-hour format with AM/PM
-        normalized_time2=time2_obj.strftime("%H:%M")  # 24-hour format
         chrome_options = Options()
-        chrome_options.add_experimental_option("debuggerAddress", "127.0.0.1:9222")  # Connect to the remote debugging port
-        driver = webdriver.Chrome(options=chrome_options)
-        time.sleep(6)
-        driver.get("https://calendly.com/app/scheduled_events/user/me")
-        # print(convertToET(date+' | '+t)) wrong day conversion, remove day from result
-        time.sleep(6)
+        chrome_options.add_experimental_option("detach", True)
+        driver = webdriver.Chrome(options=chrome_options) 
+        driver.get(f"https://calendly.com/cancellations/{slug}")
         
-        #getting day list item tags
-        divs = WebDriverWait(driver, 20).until(EC.presence_of_all_elements_located((By.TAG_NAME, 'div')))
-        day_list_items_tags=[]
-        map_day_and_items={}
-        for div in divs:
-            if div.get_attribute('data-component')=='day-list-item':
-                day_list_items_tags.append(div)
-                #finding elements inside day list items, header
-                day=div.find_element(By.TAG_NAME,'h2').text.strip()
-                dayWoYear=" ".join(day.split()[:-1]).strip()
-                parts = dayWoYear.split(", ")  
-                day_month = parts[1].split(" ") 
-                formatted_date = f"{parts[0]}, {day_month[1]} {day_month[0]}"
-                # print(formatted_date)
-                #finding event list items of this day, time
-                inside_day_list_items = div.find_elements(By.TAG_NAME,'div')
-                event_list_items=[]
-                for i in inside_day_list_items:
-                    if i.get_attribute('data-component')=='event-list-item':
-                        event_list_items.append(i)
-                # print(event_list_items)
-                map_day_and_items[formatted_date.split(", ")[1]]=event_list_items
-        print(map_day_and_items)
-        arrayToCheck=map_day_and_items[date.split(", ")[1]]
-        elToClick=None
-        for el in arrayToCheck:
-            divs=el.find_elements(By.TAG_NAME,'div')
-            for div in divs:
-                if div.get_attribute('data-component')=='locked-time':
-                    startTime=div.text.split(" ")[0]
-                    time1_obj = datetime.strptime(startTime, "%I:%M%p")  # 12-hour format with AM/PM
-                    normalized_time1 = time1_obj.strftime("%H:%M")  # 24-hour format
-                    print(normalized_time1,normalized_time2)
-                    if normalized_time1 == normalized_time2:
-                        el.click()
-                        buttons=el.find_elements(By.TAG_NAME,'button')
-                        for button in buttons:
-                            if button.get_attribute('aria-label')=='Cancel':
-                                button.click()
-                                handlePopupCancellationButton(driver)
-        return True
+        try:
+            cookie_button = WebDriverWait(driver, 10).until(
+                EC.element_to_be_clickable((By.ID, 'onetrust-accept-btn-handler'))
+            )
+            cookie_button.click()
+            print("Cookie consent dismissed")
+        except TimeoutException:
+            print("No cookie consent popup detected")
+
+        time.sleep(10)
+        textarea = WebDriverWait(driver, 20).until(
+            EC.presence_of_all_elements_located((By.TAG_NAME, 'textarea'))
+        )[0]
+        textarea.send_keys('Automated cancellation 15 minutes prior to scheduled time: Source: CRON')
+        
+        buttons = WebDriverWait(driver, 20).until(
+            EC.presence_of_all_elements_located((By.TAG_NAME, 'button'))
+        )
+        
+        while len(buttons) <= 5:
+            buttons = WebDriverWait(driver, 20).until(
+                EC.presence_of_all_elements_located((By.TAG_NAME, 'button'))
+            )
+        
+        for button in buttons:
+            if button.text == 'Cancel Event' and button.get_attribute('type')=='submit':
+                driver.execute_script("arguments[0].scrollIntoView();", button)
+                
+                driver.execute_script("document.getElementById('onetrust-policy-text').style.display = 'none';")
+                
+                button = WebDriverWait(driver, 10).until(EC.element_to_be_clickable(button))
+                time.sleep(6)
+                button.click()
+                print('Clicked "Cancel Event" button')
+                return True
+    
     except Exception as e:
-        print("Error occured during meet cancellation: ",{e})
-        return False
+        print(f"Error occurred: {e}")
     finally:
-        driver.quit()
+        # Ensure driver quits to release resources
+        if 'driver' in locals():
+            time.sleep(6)
+            driver.quit()
+            pass
 
 
 def handlePopupCancellationButton(driver):
@@ -152,23 +146,23 @@ def fetch_user_schedule(user_id):
     connection = connect_to_db()
     try:
         with connection.cursor() as cursor:
-            query = "SELECT date, time FROM user_logs WHERE id = %s;"
+            query = "SELECT date, time, slug FROM user_logs WHERE id = %s;"
             cursor.execute(query, (user_id,))
             result = cursor.fetchone()
             if result:
-                date, time = result
-                print(f"Fetched schedule for User ID {user_id}: Date = {date}, Time = {time}")
-                return date, time
+                date, time,slug = result
+                print(f"Fetched schedule for User ID {user_id}: Date = {date}, Time = {time} Slug ={slug}" )
+                return date, time, slug
             else:
                 print(f"No schedule found for User ID {user_id}")
-                return None, None
+                return None, None, None
     finally:
         connection.close()
 
-def execute_task(user_id, date, t):
-    if user_id=='' or date=='' or t=='':
+def execute_task(user_id, date, t, slug):
+    if user_id=='' or date=='' or t=='' or slug == '':
         return False
-    cancelResult=handleMeetCancellation(user_id,date,t)
+    cancelResult=handleMeetCancellation(user_id,date,t,slug)
     dbResult=handleDeletionFromDb(user_id)
     if not cancelResult or not dbResult:
         return False
@@ -179,9 +173,9 @@ if __name__ == "__main__":
         print("Usage: python3 script.py <user_id>")
         sys.exit(1)
     user_id = sys.argv[1]
-    date, t = fetch_user_schedule(user_id)
+    date, t,slug = fetch_user_schedule(user_id)
     if date and t:
-        res=execute_task(user_id, date, t)
+        res=execute_task(user_id, date, t,slug)
         if res: print('Successful')
         else: print('Error(s) detected while execution')
     else:
