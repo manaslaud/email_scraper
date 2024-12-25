@@ -10,7 +10,18 @@ from selenium.webdriver.support import expected_conditions as EC
 from selenium.webdriver.common.by import By
 from datetime import datetime, timedelta
 import pytz
+from fake_useragent import UserAgent
 from selenium.common.exceptions import TimeoutException
+
+CANCELLATION_TEXT="""
+Hey there!  
+
+Apologies in advance if this annoys you —but like every other startup, we're always trying to optimize our marketing with some growth hacks. Just wanted to let you know that *Cal ID—a better alternative to Calendly—exists, and you can do so much more with it, all at **no cost*!  
+
+To save your time, we're canceling this meeting, but we'd absolutely love to onboard you or give you a quick demo. If you're interested, you can schedule a call with our cofounder here: [cal.id/manas](https://cal.id/manas)  
+
+Cheers! 
+"""
 
 # Database config
 DB_HOST = "localhost"
@@ -18,6 +29,11 @@ DB_NAME = "test_db"
 DB_USER = "postgres"      
 DB_PASSWORD = "postgres"   
 DB_PORT = "5432"  
+
+proxy_host='p.wenshare.io'
+proxy_port='80'
+proxy_user='eonyyvfy-rotate'
+proxy_pass='oho63b4b5ysn'
 
 def convertToET(ist_time_str):
     # ist_time_str = "Wednesday, December 18 | 7:30pm"
@@ -81,10 +97,18 @@ def handleDeletionFromDb(user_id):
 
 
 def handleMeetCancellation(user_id, date='', t='', slug=''):
+    proxy_url=f'http://{proxy_user}:{proxy_pass}@{proxy_host}:{proxy_port}'
+    if(date=='' or time=='' or slug==''):
+        raise Exception('Date/Time/Slug does not exist')
+    if(user_id==''):
+        raise Exception('User id does not exist')
     try:
         chrome_options = Options()
+        ua = UserAgent()
         chrome_options.add_experimental_option("detach", True)
-        driver = webdriver.Chrome(options=chrome_options) 
+        chrome_options.add_argument(f'--proxy-server={proxy_url}')
+        driver = webdriver.Chrome(options=chrome_options)
+        chrome_options.add_argument(f'user-agent={ua.random}') 
         driver.get(f"https://calendly.com/cancellations/{slug}")
         
         try:
@@ -100,7 +124,7 @@ def handleMeetCancellation(user_id, date='', t='', slug=''):
         textarea = WebDriverWait(driver, 20).until(
             EC.presence_of_all_elements_located((By.TAG_NAME, 'textarea'))
         )[0]
-        textarea.send_keys('Automated cancellation 15 minutes prior to scheduled time: Source: CRON')
+        textarea.send_keys(CANCELLATION_TEXT)
         
         buttons = WebDriverWait(driver, 20).until(
             EC.presence_of_all_elements_located((By.TAG_NAME, 'button'))
@@ -125,12 +149,13 @@ def handleMeetCancellation(user_id, date='', t='', slug=''):
     
     except Exception as e:
         print(f"Error occurred: {e}")
+        return False
     finally:
         # Ensure driver quits to release resources
         if 'driver' in locals():
             time.sleep(6)
             driver.quit()
-            pass
+            
 
 
 def handlePopupCancellationButton(driver):
@@ -163,9 +188,10 @@ def execute_task(user_id, date, t, slug):
     if user_id=='' or date=='' or t=='' or slug == '':
         return False
     cancelResult=handleMeetCancellation(user_id,date,t,slug)
-    dbResult=handleDeletionFromDb(user_id)
-    if not cancelResult or not dbResult:
-        return False
+    if(cancelResult):
+        dbResult=handleDeletionFromDb(user_id)
+        if not cancelResult or not dbResult:
+            return False
     return True
 
 if __name__ == "__main__":
