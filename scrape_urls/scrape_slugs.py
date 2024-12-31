@@ -44,6 +44,21 @@ def checkContactsModal(driver, wait):
     except Exception as e:
         print("Error:", e)
 
+def aboutSection(driver,wait):
+    try:
+        about_element = wait.until(
+            EC.visibility_of_element_located((By.XPATH, '//*[@id="profile-content"]/div/div[2]/div/div/main/section[2]/div[3]/div/div/div/span[1]'))
+        )
+        if(about_element):
+            time.sleep(2)
+            urls=extract_calendly_url(about_element.text)
+            if(urls):
+                print(urls)
+            else:
+                print('no urls from about section')
+    except Exception as e:
+        print('Error occured in about section: ' + e )
+
 def read_excel_and_begin(file_path, sheet_name=0):
     driver = startChromeDriver()  
     wait = WebDriverWait(driver, 20)  
@@ -55,7 +70,8 @@ def read_excel_and_begin(file_path, sheet_name=0):
             
             print(f"Visiting: {slug}")  
             
-            checkContactsModal(driver, wait)
+            # checkContactsModal(driver, wait)
+            aboutSection(driver,wait)
             time.sleep(3)
             
     except FileNotFoundError:
