@@ -30,7 +30,7 @@ DB_USER = "postgres"
 DB_PASSWORD = "postgres"   
 DB_PORT = "5432"  
 
-proxy_host='p.wenshare.io'
+proxy_host='p.webshare.io'
 proxy_port='80'
 proxy_user='eonyyvfy-rotate'
 proxy_pass='oho63b4b5ysn'
@@ -106,7 +106,7 @@ def handleMeetCancellation(user_id, date='', t='', slug=''):
         chrome_options = Options()
         ua = UserAgent()
         chrome_options.add_experimental_option("detach", True)
-        chrome_options.add_argument(f'--proxy-server={proxy_url}')
+        #chrome_options.add_argument(f'--proxy-server={proxy_url}')
         driver = webdriver.Chrome(options=chrome_options)
         chrome_options.add_argument(f'user-agent={ua.random}') 
         driver.get(f"https://calendly.com/cancellations/{slug}")

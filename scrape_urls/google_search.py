@@ -2,6 +2,13 @@ from selenium import webdriver
 from selenium.webdriver.common.by import By
 from selenium.webdriver.common.keys import Keys
 import time
+import pandas as pd
+
+def save_results_to_excel(results, file_name="res1.xlsx"):
+    df = pd.DataFrame(results)
+    df.to_excel(file_name, index=False)
+    print(f"Results saved to {file_name}")
+
 
 driver = webdriver.Chrome()  
 # Perform Google search
@@ -22,7 +29,7 @@ time.sleep(2)
 
 results = []
 
-for page in range(3):  
+for page in range(25):  
     print(f"Extracting results from page {page + 1}...")
 
     time.sleep(2)
@@ -48,5 +55,6 @@ for page in range(3):
 driver.quit()
 
 print("Extracted URLs:")
+save_results_to_excel(results,)
 for result in results:
     print(result)
