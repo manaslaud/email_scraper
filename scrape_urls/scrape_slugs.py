@@ -72,6 +72,12 @@ def read_excel_and_begin(file_path, sheet_name=0):
         for slug in df.iloc[:, 0]:  
             driver.get(slug)  
             print(f"Visiting: {slug}")  
+            
+            urls = aboutSection(driver, wait)
+            if urls:
+                print(f"URLs found in aboutSection: {urls}")
+                results.append((slug, urls[0]))
+                continue
 
             urls = checkContactsModal(driver, wait)
             if urls:
@@ -84,13 +90,7 @@ def read_excel_and_begin(file_path, sheet_name=0):
                 print(f"URLs found in extractFromDiv: {urls}")
                 results.append((slug, urls[0]))
                 continue
-
-            urls = aboutSection(driver, wait)
-            if urls:
-                print(f"URLs found in aboutSection: {urls}")
-                results.append((slug, urls[0]))
-                continue
-
+            
             results.append((slug, "No URLs found"))
             time.sleep(3)
     except FileNotFoundError:

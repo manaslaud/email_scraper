@@ -1,6 +1,8 @@
 from selenium import webdriver
 from selenium.webdriver.common.by import By
 from selenium.webdriver.common.keys import Keys
+from selenium.webdriver.chrome.service import Service
+from selenium.webdriver.chrome.options import Options
 import time
 import pandas as pd
 
@@ -10,10 +12,14 @@ def save_results_to_excel(results, file_name="res1.xlsx"):
     print(f"Results saved to {file_name}")
 
 
-driver = webdriver.Chrome()  
+chrome_options = Options()
+chrome_options.add_experimental_option("detach", True)  
+chrome_options.add_argument("--remote-debugging-port=9223")  
+service = Service('/usr/bin/chromedriver')
+driver = webdriver.Chrome(service=service, options=chrome_options)  
 # Perform Google search
 query = 'site:linkedin.com/in/ "Book a Meet" OR "calendly.com/"'
-driver.get("https://www.google.com")
+# driver.get("https://www.google.com")
 
 try:
     accept_button = driver.find_element(By.XPATH, "//button[contains(text(), 'Accept')]")
@@ -21,9 +27,9 @@ try:
 except:
     pass 
 
-search_box = driver.find_element(By.NAME, "q")  
-search_box.send_keys(query)
-search_box.send_keys(Keys.RETURN)  
+# search_box = driver.find_element(By.NAME, "q")  
+# search_box.send_keys(query)
+# search_box.send_keys(Keys.RETURN)  
 
 time.sleep(2)
 
@@ -45,7 +51,7 @@ for page in range(25):
     driver.execute_script("window.scrollTo(0, document.body.scrollHeight);")
     
     try:
-        next_button = driver.find_element(By.XPATH, '//a[@id="pnnext"]')
+        next_button = driver.find_element(By.XPATH, '//*[@id="pnnext"]')
         next_button.click()  
         time.sleep(2)  
     except Exception as e:
