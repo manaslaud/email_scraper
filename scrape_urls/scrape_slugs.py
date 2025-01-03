@@ -24,7 +24,6 @@ def extract_calendly_url(text):
 
 def startChromeDriver():
     chrome_options = Options()
-    chrome_options.add_experimental_option("detach", True)  
     chrome_options.add_argument("--remote-debugging-port=9222")
     chrome_options.add_argument(f'user-agent={ua.random}')
     chrome_options.add_argument(f'--proxy-server={proxy_url}')
@@ -80,7 +79,7 @@ def read_excel_and_begin(file_path, sheet_name=0):
     results = []
 
     try:
-        df = pd.read_excel(file_path, sheet_name=sheet_name, usecols=[0], header=None,skiprows=89)  
+        df = pd.read_excel(file_path, sheet_name=sheet_name, usecols=[0], header=None,skiprows=272)  
         for slug in df.iloc[:, 0]:  
             driver.get(slug)  
             print(f"Visiting: {slug}")  
