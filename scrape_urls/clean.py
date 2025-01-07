@@ -1,24 +1,31 @@
 import pandas as pd
 import re
 
-regex = r'calendly\.com/[A-Za-z0-9]+'
-
-input_file = "calendly.com-backlinks_pages.xlsx"  
-df = pd.read_excel(input_file)
-
-urls = df.iloc[:, 0]
-
-valid_urls = []
-for url in urls:
-    if isinstance(url, str):  
-        url = re.sub(r'^https://', '', url)
-        # Check if the URL matches the regex
-        if re.fullmatch(regex, url):
-            valid_urls.append(url)
-
-clean_df = pd.DataFrame(valid_urls, columns=["Valid Calendly URLs"])
-
+input_file = "calendly.com-backlinks_pages.xlsx" 
 output_file = "clean_result.xlsx"
-clean_df.to_excel(output_file, index=False)
 
-print(f"Valid URLs saved to {output_file}")
+df = pd.read_excel(input_file, engine="openpyxl")
+
+urls = df.iloc[:, 0]  
+
+profile_regex = r'calendly\.com/[A-Za-z0-9]+'
+time_slot_regex = r'calendly\.com/([A-Za-z0-9]+)/\d+min'
+
+def filter_and_clean_urls(url):
+    if isinstance(url, str): 
+        # Remove the 'https://' prefix
+        url = re.sub(r'^https?://', '', url)
+        time_slot_match = re.match(time_slot_regex, url)
+        if time_slot_match:
+            return f"calendly.com/{time_slot_match.group(1)}/"  # Extract the base URL
+        profile_match = re.match(profile_regex, url)
+        if profile_match:
+            return f"{profile_match.group(0)}/"
+    return None  
+
+cleaned_urls = urls.apply(filter_and_clean_urls)
+
+cleaned_urls = cleaned_urls.dropna().drop_duplicates()  # Remove duplicates and invalid entries
+cleaned_urls.to_frame("Valid Links").to_excel(output_file, index=False, engine="openpyxl")
+
+print(f"Cleaned URLs saved to {output_file}")
