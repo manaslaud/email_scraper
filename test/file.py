@@ -363,7 +363,7 @@ def process_slug(slug):
 
 def read_excel(file_path, sheet_name=0):
     try:
-        df = pd.read_excel(file_path, sheet_name=sheet_name, usecols=[0], header=None)  
+        df = pd.read_excel(file_path, sheet_name=sheet_name, usecols=[0], header=None,skiprows=5)  
         
         for slug in df.iloc[:, 0]:  
             print(slug)  
