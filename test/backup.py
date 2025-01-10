@@ -1,5 +1,6 @@
 import pandas as pd
 import time
+import signal
 import requests
 from selenium import webdriver
 from selenium.webdriver.chrome.service import Service
@@ -349,33 +350,52 @@ def process_slug(slug,driver):
     if r.status_code == 200:
         get_all_a_tags_selenium(url, slug,driver)
 
+def timeout_handler(signum, frame):
+    print("Processing timed out!")
+    raise TimeoutException("Processing exceeded the time limit")
+
+
 def read_excel(file_path, sheet_name=0):
     try:
+        # Define the proxy settings
         proxy_url = f'http://{proxy_user}:{proxy_pass}@{proxy_host}:{proxy_port}'
         ua = UserAgent()
-        df = pd.read_excel(file_path, sheet_name=sheet_name, usecols=[0], header=None, skiprows=1105)   
-        
-        for slug in df.iloc[:, 0]:  
-            print(slug)  
 
-            # Initialize the driver for each iteration
-            chrome_options = Options()
-            chrome_options.add_argument(f'--proxy-server={proxy_url}')
-            chrome_options.add_experimental_option("detach", True)
-            chrome_options.add_argument(f'user-agent={ua.random}')
-            chrome_options.add_argument('--headless')
-            chrome_options.add_argument('--disable-gpu')  # Disable GPU hardware acceleration
-            chrome_options.add_argument('--no-sandbox')
-            service = Service('/usr/local/bin/chromedriver')
-            driver = webdriver.Chrome(service=service, options=chrome_options)
-            
-            process_slug(slug, driver)
-            driver.quit()  # Ensure driver is quit after each iteration
+        df = pd.read_excel(file_path, sheet_name=sheet_name, usecols=[0], header=None, skiprows=7005)
+
+        for slug in df.iloc[:, 0]:  
+            print(f"Processing slug: {slug}")
+
+            # Set the timeout signal
+            signal.signal(signal.SIGALRM, timeout_handler)
+            signal.alarm(120)  # Set the timeout to 150 seconds
+
+            try:
+                chrome_options = Options()
+                chrome_options.add_argument(f'--proxy-server={proxy_url}')
+                chrome_options.add_experimental_option("detach", True)
+                chrome_options.add_argument(f'user-agent={ua.random}')
+                chrome_options.add_argument('--headless')
+                chrome_options.add_argument('--disable-gpu')  # Disable GPU hardware acceleration
+                chrome_options.add_argument('--no-sandbox')
+                service = Service('/usr/bin/chromedriver')
+                driver = webdriver.Chrome(service=service, options=chrome_options)
+
+                process_slug(slug, driver)
+
+            except TimeoutException:
+                print(f"Processing of slug '{slug}' exceeded time limit.")
+            except Exception as e:
+                print(f"An error occurred while processing slug '{slug}': {e}")
+            finally:
+                signal.alarm(0)  # Disable the alarm after processing the slug
+                driver.close()
+                driver.quit()  # Ensure driver is quit after each iteration
+
     except FileNotFoundError:
         print(f"File not found: {file_path}")
     except Exception as e:
         print(f"An error occurred (read_excel error): {e}")
-
 if __name__ == "__main__":
     print("Running:")
     file_path = "clean_result.xlsx"
